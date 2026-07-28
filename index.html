@@ -507,8 +507,8 @@ function showToast(msg){
 function exportCSV(){
   const headers = [
     'Cuadrilla','Institucion','Rol Fijo',
-    'Nombre y Apellido','Rol','Codigo/Año Juramento','Profesion',
-    'Alergico','Observacion Alergia','Seguro Medico','Observacion Seguro'
+    'Nombre y Apellido','Rol','Codigo/Año Juramento','Profesion','Telefono',
+    'Alergico','Seguro Medico'
   ];
 
   const cuadrilla = document.getElementById('cuadrillaNombre').value;
@@ -517,10 +517,9 @@ function exportCSV(){
   const rows = members.map((m, index) => [
     cuadrilla, institucion,
     index === 0 ? 'Jefe de Cuadrilla' : index === 1 ? 'Oficial de Seguridad' : ('Integrante ' + (index - 1)),
-    m.telefono ? (m.nombre + ' - Tel: ' + m.telefono) : m.nombre,
-    m.rol === 'compite' ? 'Compite' : (m.rol === 'hinchada' ? 'Hinchada' : 'Logistica'), m.codigoAnioJuramento, m.profesion,
-    m.alergico === true ? 'Si' : (m.alergico === false ? 'No' : 'Sin responder'), m.alergiaDetalle,
-    m.seguroMedico === true ? 'Si' : (m.seguroMedico === false ? 'No' : 'Sin responder'), m.seguroDetalle
+    m.nombre, m.rol === 'compite' ? 'Compite' : (m.rol === 'hinchada' ? 'Hinchada' : 'Logistica'), m.codigoAnioJuramento, m.profesion, m.telefono,
+    (m.alergico === true && m.alergiaDetalle && m.alergiaDetalle.trim()) ? m.alergiaDetalle : 'Sin alergias',
+    (m.seguroMedico === true && m.seguroDetalle && m.seguroDetalle.trim()) ? m.seguroDetalle : 'Sin seguro'
   ]);
 
   let csv = headers.join(';') + '\n';
