@@ -92,6 +92,7 @@
     width:100%; background:#ffffff; border:1px solid var(--line); color:var(--text);
     padding:10px 12px; border-radius:9px; font-size:13.5px; outline:none;
     transition: border-color .15s, box-shadow .15s;
+    text-transform: uppercase;
   }
   input[type=text]:focus, input[type=number]:focus, select:focus{
     border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,163,74,0.12);
@@ -222,11 +223,11 @@
   <div class="panel">
     <div class="field">
       <label>Nombre de la cuadrilla</label>
-      <input type="text" id="cuadrillaNombre" placeholder="Ej: Cuadrilla N.º 1">
+      <input type="text" id="cuadrillaNombre" placeholder="Ej: Cuadrilla N.º 1" oninput="this.value = this.value.toUpperCase()">
     </div>
     <div class="field" style="margin-top:14px;">
       <label>Institución o Compañía a la que pertenece</label>
-      <input type="text" id="institucionNombre" placeholder="Ej: K31">
+      <input type="text" id="institucionNombre" placeholder="Ej: K31" oninput="this.value = this.value.toUpperCase()">
     </div>
   </div>
 
@@ -345,7 +346,7 @@ function removeMember(id){
 
 function updateField(id, field, value){
   const m = members.find(m => m.id === id);
-  if(m) m[field] = value;
+  if(m) m[field] = typeof value === 'string' ? value.toUpperCase() : value;
   updateCounters();
   updatePreview(id);
 }
