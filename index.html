@@ -286,16 +286,14 @@ function saveToSheets(){
 
   fetch(WEB_APP_URL, {
     method: 'POST',
+    mode: 'no-cors',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(data)
   })
-    .then(res => res.json())
-    .then(res => {
-      if (res.status === 'ok') {
-        showToast('Guardado en Google Sheets correctamente');
-      } else {
-        showToast('Error: ' + res.message);
-      }
+    .then(() => {
+      // Con mode "no-cors" el navegador no permite leer la respuesta de Apps Script,
+      // pero la solicitud sí llega y se procesa del lado del servidor.
+      showToast('Formulario enviado. Revisá la planilla en Drive para confirmar.');
     })
     .catch(err => {
       showToast('No se pudo conectar con Google Sheets');
