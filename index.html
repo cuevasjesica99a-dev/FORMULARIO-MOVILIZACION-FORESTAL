@@ -75,6 +75,9 @@
   }
   .grid3{display:grid; grid-template-columns:repeat(3, 1fr); gap:14px;}
   @media (max-width: 760px){ .grid3{grid-template-columns:1fr;} }
+  .grid4{display:grid; grid-template-columns:repeat(4, 1fr); gap:14px;}
+  @media (max-width: 900px){ .grid4{grid-template-columns:repeat(2, 1fr);} }
+  @media (max-width: 560px){ .grid4{grid-template-columns:1fr;} }
 
   label{
     display:block; font-size:11px; text-transform:uppercase; letter-spacing:.7px;
@@ -128,6 +131,11 @@
   .role-btn.active-compite{background: rgba(76,175,109,0.15); border-color:var(--green); color:var(--green);}
   .role-btn.active-hinchada{background: rgba(217,164,65,0.15); border-color:var(--amber); color:var(--amber);}
   .role-btn.active-logistica{background: rgba(185,138,83,0.18); border-color:var(--wood); color:var(--wood);}
+
+  .role-fixed-badge{
+    font-size:11px; padding:6px 14px; border-radius:8px; font-weight:700;
+    background: rgba(76,175,109,0.15); border:1px solid var(--green); color:var(--green);
+  }
 
   .remove-btn{
     background:none; border:1px solid var(--line); color:var(--text-faint);
@@ -220,25 +228,23 @@
     <div class="num">2</div>
     <h2>Integrantes</h2>
   </div>
-  <p class="hint" style="margin: -6px 0 14px;">El primer integrante corresponde al Jefe de Cuadrilla y el segundo al Oficial de Seguridad. Ambos son fijos y completan los mismos datos que el resto.</p>
+  <p class="hint" style="margin: -6px 0 14px;">El primer integrante corresponde al Jefe de Cuadrilla y el segundo al Oficial de Seguridad. Los 5 integrantes iniciales quedan marcados en "Compite" sin poder cambiarse. Si necesitás sumar hinchada o logística, agregá más integrantes con el botón de abajo: esos sí van a permitir elegir el rol.</p>
 
   <div id="membersContainer"></div>
 
   <div class="toolbar">
-    <button class="btn btn-primary" onclick="addMember()">+ Agregar integrante</button>
-    <button class="btn btn-ghost" onclick="addMultiple()">+ Agregar 10</button>
+    <button class="btn btn-ghost" onclick="addMember()">+ Agregar más integrantes</button>
   </div>
 
 </div>
 
 <div class="footer-actions">
   <div class="hint">
-    Los datos se guardan solo en este navegador mientras completás el formulario. Usá "Exportar CSV" para
-    generar una planilla lista para abrir en Excel/Sheets, o "Exportar JSON" como respaldo.
+    Los datos se guardan solo en este navegador mientras completás el formulario. Al tocar "Enviar formulario"
+    se envían directamente a la planilla de Google Sheets en Drive.
   </div>
   <div class="toolbar" style="margin-top:0;">
-    <button class="btn btn-export" onclick="exportCSV()">⭳ Exportar CSV</button>
-    <button class="btn btn-export" onclick="exportJSON()">⭳ Exportar JSON</button>
+    <button class="btn btn-primary" onclick="saveToSheets()" id="btnGuardarSheets">Enviar formulario</button>
   </div>
 </div>
 
@@ -248,14 +254,69 @@
 let members = [];
 let idCounter = 0;
 
-function newMember(){
+// Pegar acá la URL de la implementación del Apps Script (termina en /exec)
+const WEB_APP_URL = 'PEGAR_AQUI_LA_URL_DEL_APPS_SCRIPT';
+
+function saveToSheets(){
+  if (!WEB_APP_URL || WEB_APP_URL.indexOf('PEGAR_AQUI') !== -1) {
+    showToast('Falta configurar la URL del Apps Script en el código');
+    return;
+  }
+
+  const cuadrilla = document.getElementById('cuadrillaNombre').value;
+  const institucion = document.getElementById('institucionNombre').value;
+
+  if (!cuadrilla.trim()) {
+    showToast('Completá el nombre de la cuadrilla antes de guardar');
+    return;
+  }
+
+  const data = {
+    cuadrilla: cuadrilla,
+    institucion: institucion,
+    jefeCuadrilla: members[0] ? members[0].nombre : '',
+    oficialSeguridad: members[1] ? members[1].nombre : '',
+    integrantes: members
+  };
+
+  const boton = document.getElementById('btnGuardarSheets');
+  const textoOriginal = boton.textContent;
+  boton.textContent = 'Guardando...';
+  boton.disabled = true;
+
+  fetch(WEB_APP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(data)
+  })
+    .then(res => res.json())
+    .then(res => {
+      if (res.status === 'ok') {
+        showToast('Guardado en Google Sheets correctamente');
+      } else {
+        showToast('Error: ' + res.message);
+      }
+    })
+    .catch(err => {
+      showToast('No se pudo conectar con Google Sheets');
+      console.error(err);
+    })
+    .finally(() => {
+      boton.textContent = textoOriginal;
+      boton.disabled = false;
+    });
+}
+
+function newMember(locked){
   idCounter++;
   return {
     id: idCounter,
     nombre: '',
-    rol: 'compite', // 'compite' | 'hinchada'
-    codigoBombero: '',
-    anioJuramento: '',
+    rol: 'compite', // 'compite' | 'hinchada' | 'logistica'
+    locked: !!locked, // true = integrante fijo inicial, no puede cambiar de rol
+    codigoAnioJuramento: '',
+    profesion: '',
+    telefono: '',
     seguroMedico: null,
     seguroDetalle: '',
     alergico: null,
@@ -264,12 +325,12 @@ function newMember(){
 }
 
 function addMember(){
-  members.push(newMember());
+  members.push(newMember(false));
   render();
 }
 
 function addMultiple(){
-  for(let i=0;i<10;i++){ members.push(newMember()); }
+  for(let i=0;i<10;i++){ members.push(newMember(false)); }
   render();
 }
 
@@ -360,27 +421,32 @@ function render(){
           </div>
         </div>
         <div style="display:flex; align-items:center; gap:10px;">
+          ${m.locked ? '<div class="role-fixed-badge">Compite</div>' : `
           <div class="role-toggle">
             <button type="button" class="role-btn ${m.rol==='compite' ? 'active-compite' : ''}" onclick="setRole(${m.id}, 'compite')">Compite</button>
             <button type="button" class="role-btn ${m.rol==='hinchada' ? 'active-hinchada' : ''}" onclick="setRole(${m.id}, 'hinchada')">Hinchada</button>
             <button type="button" class="role-btn ${m.rol==='logistica' ? 'active-logistica' : ''}" onclick="setRole(${m.id}, 'logistica')">Logística</button>
-          </div>
+          </div>`}
           ${isFixed ? '<div class="fixed-tag">Fijo</div>' : `<button class="remove-btn" onclick="removeMember(${m.id})" title="Quitar">✕</button>`}
         </div>
       </div>
 
-      <div class="grid3">
+      <div class="grid4">
         <div class="field">
           <label>Nombre y apellido</label>
           <input type="text" value="${escapeAttr(m.nombre)}" oninput="updateField(${m.id}, 'nombre', this.value)" placeholder="Nombre completo">
         </div>
         <div class="field">
-          <label>Código de juramento</label>
-          <input type="text" value="${escapeAttr(m.codigoBombero)}" oninput="updateField(${m.id}, 'codigoBombero', this.value)" placeholder="Código">
+          <label>Código/Año de juramento</label>
+          <input type="text" value="${escapeAttr(m.codigoAnioJuramento)}" oninput="updateField(${m.id}, 'codigoAnioJuramento', this.value)" placeholder="Ej: 123 / 2019">
         </div>
         <div class="field">
-          <label>Año de juramento</label>
-          <input type="text" value="${escapeAttr(m.anioJuramento)}" oninput="updateField(${m.id}, 'anioJuramento', this.value)" placeholder="Ej: 2019">
+          <label>Profesión</label>
+          <input type="text" value="${escapeAttr(m.profesion)}" oninput="updateField(${m.id}, 'profesion', this.value)" placeholder="Ej: Técnico forestal">
+        </div>
+        <div class="field">
+          <label>Número de teléfono</label>
+          <input type="text" value="${escapeAttr(m.telefono)}" oninput="updateField(${m.id}, 'telefono', this.value)" placeholder="Ej: 0981 123 456">
         </div>
       </div>
 
@@ -435,7 +501,7 @@ function showToast(msg){
 function exportCSV(){
   const headers = [
     'Cuadrilla','Institucion','Oficial de Seguridad','Jefe de Cuadrilla','Rol Fijo',
-    'Nombre y Apellido','Rol','Codigo Juramento','Año Juramento',
+    'Nombre y Apellido','Rol','Codigo/Año Juramento','Profesion','Telefono',
     'Alergico','Observacion Alergia','Seguro Medico','Observacion Seguro'
   ];
 
@@ -447,7 +513,7 @@ function exportCSV(){
   const rows = members.map((m, index) => [
     cuadrilla, institucion, oficial, jefe,
     index === 0 ? 'Jefe de Cuadrilla' : index === 1 ? 'Oficial de Seguridad' : ('Integrante ' + (index - 1)),
-    m.nombre, m.rol === 'compite' ? 'Compite' : (m.rol === 'hinchada' ? 'Hinchada' : 'Logistica'), m.codigoBombero, m.anioJuramento,
+    m.nombre, m.rol === 'compite' ? 'Compite' : (m.rol === 'hinchada' ? 'Hinchada' : 'Logistica'), m.codigoAnioJuramento, m.profesion, m.telefono,
     m.alergico === true ? 'Si' : (m.alergico === false ? 'No' : 'Sin responder'), m.alergiaDetalle,
     m.seguroMedico === true ? 'Si' : (m.seguroMedico === false ? 'No' : 'Sin responder'), m.seguroDetalle
   ]);
@@ -486,7 +552,8 @@ function exportJSON(){
 }
 
 // Inicializar con 10 integrantes por defecto (grupo típico compite)
-for(let i=0;i<10;i++){ members.push(newMember()); }
+// Inicializar con 5 integrantes fijos, marcados en Compite y sin poder cambiar de rol
+for(let i=0;i<5;i++){ members.push(newMember(true)); }
 render();
 </script>
 
