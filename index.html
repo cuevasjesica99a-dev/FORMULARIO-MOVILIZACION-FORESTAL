@@ -199,6 +199,33 @@
     transition: all .25s; z-index:100; box-shadow: 0 8px 30px rgba(22,36,26,0.15);
   }
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  .success-overlay{
+    position:fixed; inset:0; z-index:200;
+    background: rgba(22,36,26,0.55);
+    display:none; align-items:center; justify-content:center;
+    padding: 20px;
+  }
+  .success-overlay.show{display:flex;}
+  .success-card{
+    background:#ffffff; border-radius:18px; padding: 36px 32px;
+    max-width:380px; width:100%; text-align:center;
+    box-shadow: 0 20px 60px rgba(22,36,26,0.35);
+    animation: successPop .25s ease-out;
+  }
+  @keyframes successPop{
+    from{ transform: scale(0.9); opacity:0; }
+    to{ transform: scale(1); opacity:1; }
+  }
+  .success-check{
+    width:64px; height:64px; margin: 0 auto 18px;
+    border-radius:50%; background: var(--green-soft); color:var(--green);
+    display:flex; align-items:center; justify-content:center;
+    font-size:32px; font-weight:700; border:2px solid var(--green);
+  }
+  .success-card h2{
+    font-size:19px; letter-spacing:.5px; margin: 0; color:var(--text); font-weight:800;
+  }
 </style>
 </head>
 <body>
@@ -257,6 +284,13 @@
 
 <div class="toast" id="toast"></div>
 
+<div class="success-overlay" id="successOverlay" onclick="hideSuccessOverlay()">
+  <div class="success-card">
+    <div class="success-check">✓</div>
+    <h2>FORMULARIO COMPLETADO</h2>
+  </div>
+</div>
+
 <script>
 let members = [];
 let idCounter = 0;
@@ -300,7 +334,7 @@ function saveToSheets(){
     .then(() => {
       // Con mode "no-cors" el navegador no permite leer la respuesta de Apps Script,
       // pero la solicitud sí llega y se procesa del lado del servidor.
-      showToast('Formulario enviado. Revisá la planilla en Drive para confirmar.');
+      showSuccessOverlay();
     })
     .catch(err => {
       showToast('No se pudo conectar con Google Sheets');
@@ -503,6 +537,15 @@ function showToast(msg){
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function showSuccessOverlay(){
+  document.getElementById('successOverlay').classList.add('show');
+  setTimeout(() => hideSuccessOverlay(), 2500);
+}
+
+function hideSuccessOverlay(){
+  document.getElementById('successOverlay').classList.remove('show');
 }
 
 function exportCSV(){
