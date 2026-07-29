@@ -287,7 +287,7 @@
 <div class="success-overlay" id="successOverlay" onclick="hideSuccessOverlay()">
   <div class="success-card">
     <div class="success-check">✓</div>
-    <h2>FORMULARIO COMPLETADO</h2>
+    <h2>FORMULARIO ENVIADO</h2>
   </div>
 </div>
 
@@ -336,6 +336,7 @@ function saveToSheets(){
       // Con mode "no-cors" el navegador no permite leer la respuesta de Apps Script,
       // pero la solicitud sí llega y se procesa del lado del servidor.
       showSuccessOverlay();
+      resetFormulario();
     })
     .catch(err => {
       showToast('No se pudo conectar con Google Sheets');
@@ -587,9 +588,17 @@ function exportJSON(){
   showToast('JSON exportado correctamente');
 }
 
+function resetFormulario(){
+  document.getElementById('cuadrillaNombre').value = '';
+  document.getElementById('institucionNombre').value = '';
+  members = [];
+  idCounter = 0;
+  for(let i=0;i<5;i++){ members.push(newMember()); }
+  render();
+}
+
 // Inicializar con 5 integrantes fijos, todos parte del equipo que compite
-for(let i=0;i<5;i++){ members.push(newMember()); }
-render();
+resetFormulario();
 </script>
 
 </body>
