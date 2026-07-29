@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>8va Movilización Forestal · Registro de Cuadrilla</title>
+<title>8va Movilización Forestal · Registro de Compite</title>
 <style>
   :root{
     --bg: #f6faf7;
@@ -235,7 +235,7 @@
     <div class="brand">
       <div class="mark">🌲</div>
       <div>
-        <h1>8va Movilización Forestal</h1>
+        <h1>8va Movilización Forestal · Equipo que Compite</h1>
       </div>
     </div>
   </div>
@@ -262,7 +262,7 @@
     <div class="num">2</div>
     <h2>Integrantes</h2>
   </div>
-  <p class="hint" style="margin: -6px 0 14px;">El primer integrante corresponde al Jefe de Cuadrilla y el segundo al Oficial de Seguridad. Los 5 integrantes iniciales quedan marcados en "Compite" sin poder cambiarse. Si necesitás sumar hinchada o logística, agregá más integrantes con el botón de abajo: esos sí van a permitir elegir el rol.</p>
+  <p class="hint" style="margin: -6px 0 14px;">Este formulario es solo para el equipo que compite. El primer integrante corresponde al Jefe de Cuadrilla y el segundo al Oficial de Seguridad. La hinchada y logística se cargan en el otro formulario, usando el mismo nombre de cuadrilla, para que quede todo junto en la misma planilla.</p>
 
   <div id="membersContainer"></div>
 
@@ -315,6 +315,7 @@ function saveToSheets(){
   const data = {
     cuadrilla: cuadrilla,
     institucion: institucion,
+    tipoFormulario: 'compite',
     jefeCuadrilla: members[0] ? members[0].nombre : '',
     oficialSeguridad: members[1] ? members[1].nombre : '',
     integrantes: members
@@ -346,13 +347,12 @@ function saveToSheets(){
     });
 }
 
-function newMember(locked){
+function newMember(){
   idCounter++;
   return {
     id: idCounter,
     nombre: '',
-    rol: 'compite', // 'compite' | 'hinchada' | 'logistica'
-    locked: !!locked, // true = integrante fijo inicial, no puede cambiar de rol
+    rol: 'compite',
     codigoAnioJuramento: '',
     profesion: '',
     telefono: '',
@@ -364,12 +364,12 @@ function newMember(locked){
 }
 
 function addMember(){
-  members.push(newMember(false));
+  members.push(newMember());
   render();
 }
 
 function addMultiple(){
-  for(let i=0;i<10;i++){ members.push(newMember(false)); }
+  for(let i=0;i<10;i++){ members.push(newMember()); }
   render();
 }
 
@@ -389,13 +389,6 @@ function toggleBool(id, field){
   const m = members.find(m => m.id === id);
   if(!m) return;
   m[field] = !m[field];
-  render();
-}
-
-function setRole(id, role){
-  const m = members.find(m => m.id === id);
-  if(!m) return;
-  m.rol = role;
   render();
 }
 
@@ -460,12 +453,7 @@ function render(){
           </div>
         </div>
         <div style="display:flex; align-items:center; gap:10px;">
-          ${m.locked ? '<div class="role-fixed-badge">Compite</div>' : `
-          <div class="role-toggle">
-            <button type="button" class="role-btn ${m.rol==='compite' ? 'active-compite' : ''}" onclick="setRole(${m.id}, 'compite')">Compite</button>
-            <button type="button" class="role-btn ${m.rol==='hinchada' ? 'active-hinchada' : ''}" onclick="setRole(${m.id}, 'hinchada')">Hinchada</button>
-            <button type="button" class="role-btn ${m.rol==='logistica' ? 'active-logistica' : ''}" onclick="setRole(${m.id}, 'logistica')">Logística</button>
-          </div>`}
+          <div class="role-fixed-badge">Compite</div>
           ${isFixed ? '<div class="fixed-tag">Fijo</div>' : `<button class="remove-btn" onclick="removeMember(${m.id})" title="Quitar">✕</button>`}
         </div>
       </div>
@@ -599,9 +587,8 @@ function exportJSON(){
   showToast('JSON exportado correctamente');
 }
 
-// Inicializar con 10 integrantes por defecto (grupo típico compite)
-// Inicializar con 5 integrantes fijos, marcados en Compite y sin poder cambiar de rol
-for(let i=0;i<5;i++){ members.push(newMember(true)); }
+// Inicializar con 5 integrantes fijos, todos parte del equipo que compite
+for(let i=0;i<5;i++){ members.push(newMember()); }
 render();
 </script>
 
